@@ -1,11 +1,27 @@
 import sys
 import signal
 import ssl
+import json
+import struct
+import threading
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 from optparse import OptionParser
 
 clients = []
-server = []
+
+interval = 5
+
+def getClusterStatus():
+	data = {"host": "Thinkpad-S3-S440", "CPU": 25}
+	return data
+
+def dispatchData():
+	if len(clients) > 0:
+		data = getClusterStatus()
+		for client in clients:
+			client.sendMessage(json.dumps(data))
+	t = threading.Timer(interval, dispatchData)
+	t.start()
 
 class ZJUSPCServer(WebSocket):
 	def handleMessage(self):
@@ -45,4 +61,6 @@ if __name__ == "__main__":
 
 	signal.signal(signal.SIGINT, close_sig_handler)
 
+	t = threading.Timer(interval, dispatchData)
+	t.start()
 	server.serveforever()

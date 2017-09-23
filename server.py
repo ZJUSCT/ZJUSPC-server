@@ -12,11 +12,11 @@ clients = []
 interval = 5
 
 def getClusterStatus():
-	data = [
-		{"disk": 67, "CPU": 25, "memory": 49}, 
-		{"disk": 100, "CPU": 34, "memory": 86},
-		{"disk": 1, "CPU": 12, "memory": 21},
-	]
+	data = (
+		(67, 25, 49), 
+		(100, 34, 86),
+		(1, 12, 21),
+	)
 	return data
 
 def dispatchData():

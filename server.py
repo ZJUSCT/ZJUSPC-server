@@ -12,7 +12,11 @@ clients = []
 interval = 5
 
 def getClusterStatus():
-	data = {"host": "Thinkpad-S3-S440", "CPU": 25}
+	data = [
+		{"disk": 67, "CPU": 25, "memory": 49}, 
+		{"disk": 100, "CPU": 34, "memory": 86},
+		{"disk": 1, "CPU": 12, "memory": 21},
+	]
 	return data
 
 def dispatchData():
@@ -25,13 +29,17 @@ def dispatchData():
 
 class ZJUSPCServer(WebSocket):
 	def handleMessage(self):
-		for client in clients:
-			if client != self:
-				client.sendMessage(self.address[0] + u" - " + self.data)
+		pass
+		# for client in clients:
+		# 	if client != self:
+		# 		client.sendMessage(self.address[0] + u" - " + self.data)
 
 	def handleConnected(self):
 		print self.address, "connected"
 		clients.append(self)
+		self.sendMessage(json.dumps({
+			"nodesInit": ["N1", "N2", "N3"],
+		}))
 
 	def handleClose(self):
 		clients.remove(self)

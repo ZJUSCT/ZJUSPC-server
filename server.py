@@ -9,15 +9,22 @@ from optparse import OptionParser
 
 clients = []
 
-interval = 5
+interval = 1
+
+import random
+test = {
+	"data": [
+		[67, 25, 49],
+		[100, 34, 86],
+		[1, 12, 21],
+	]
+}
 
 def getClusterStatus():
-	data = (
-		(67, 25, 49), 
-		(100, 34, 86),
-		(1, 12, 21),
-	)
-	return data
+	for i in range(0, len(test["data"])):
+		for j in range(0, len(test["data"][i])):
+			test["data"][i][j] += random.randrange(-5, 5)
+	return test["data"]
 
 def dispatchData():
 	if len(clients) > 0:

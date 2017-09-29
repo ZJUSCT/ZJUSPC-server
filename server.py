@@ -75,7 +75,11 @@ def dispatchData():
 	# keep fetching data for log and next connection
 	for client in clients:
 		client.sendMessage(json.dumps({
-			"basis": status
+			"basis": status,
+			"process": [
+				[3187, "pts/0", "00:00:00", "bash"],
+				[3353, "pts/0", "00:00:00", "ps"],
+			]
 		}))
 	t = threading.Timer(interval, dispatchData)
 	t.start()
@@ -83,9 +87,7 @@ def dispatchData():
 class ZJUSPCServer(WebSocket):
 	def handleMessage(self):
 		self.data = json.loads(self.data)
-		msg = {
-			"extra": {}
-		} # sending extra package on server receive..
+		msg = { "extra": {} } # sending extra package on server receive..
 		if "node" in self.data:
 			msg["extra"]["presentStatus"] = cluster.data[int(self.data["node"])]
 		if "viewState" in self.data:
@@ -100,6 +102,7 @@ class ZJUSPCServer(WebSocket):
 		clients.append(self)
 		self.sendMessage(json.dumps({
 			"init": cluster.getInit(),
+			"basis": cluster.currentStatus,
 		}))
 
 	def handleClose(self):

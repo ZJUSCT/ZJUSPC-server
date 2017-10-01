@@ -4,42 +4,25 @@ import ssl
 import time
 import json
 import struct
-from copy import deepcopy as cp
 import threading
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket, SimpleSSLWebSocketServer
 from optparse import OptionParser
 
-clients = []
+from cluster import Cluster
 
+# host = "10.78.18.246"
+# port = 8087
+host = ""
+port = 8087
+
+clients = []
 interval = 1
-port = 7194
 maxLen = 61
 
-class DataGen:
+class ClusterInterface:
 	def __init__(self):
-		self.data = [
-			[67, 25, 49, 12],
-			[100, 34, 86, 13],
-			[],
-			[1, 12, 21, 67],
-			[],
-			# if node not running then put a []
-		]
-	def getData(self):
-		import random
-		for i in range(0, len(self.data)):
-			for j in range(0, len(self.data[i])):
-				self.data[i][j] = (self.data[i][j] + random.randrange(-10, 10)) % 100
-		return cp(self.data)
-dataGen = DataGen()
-
-def getNodes():
-	return ["cpu00", "cpu01", "cpu02", "gpu00", "mic00"]
-
-class Cluster:
-	def __init__(self):
-		# start the server!
-		self.nodeList = getNodes()
+		self.cluster = Cluster()
+		self.nodeList = self.cluster.getNodes()
 		self.data = [[[[], ""] for x in range(0, maxLen)] for y in range(0, len(self.nodeList))]
 		# [
 		# 	[
@@ -54,9 +37,10 @@ class Cluster:
 		# ]
 		# id for node, id.id for time
 		self.getStatus()
+		print("server initialized successfully!")
 
 	def getStatus(self):
-		self.currentStatus = dataGen.getData()
+		self.currentStatus = self.cluster.getStatus() #dataGen.getData()
 		for i in range(0, len(self.nodeList)):
 			del self.data[i][0]
 			self.data[i].append([self.currentStatus[i], str(time.time())])
@@ -68,7 +52,7 @@ class Cluster:
 			"status": self.currentStatus
 		}
 
-cluster = Cluster()
+cluster = ClusterInterface()
 
 def dispatchData():
 	status = cluster.getStatus()
@@ -113,7 +97,7 @@ if __name__ == "__main__":
 	global server
 
 	parser = OptionParser(usage="usage: %prog [options]", version="%prog 1.0")
-	parser.add_option("--host", default="", type="string", action="store", dest="host", help="hostname (localhost)")
+	parser.add_option("--host", default=host, type="string", action="store", dest="host", help="hostname (localhost)")
 	parser.add_option("--port", default=port, type="int", action="store", dest="port", help="port (8000)")
 	parser.add_option("--ssl", default=0, type="int", action="store", dest="ssl", help="ssl (1: on, 0: off (default))")
 	parser.add_option("--cert", default="./cert.pem", type="string", action="store", dest="cert", help="cert (./cert.pem)")

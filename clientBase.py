@@ -3,15 +3,13 @@ import threading
 import os
 
 class ClientBase:
-	def __init__(self, inputFromStd, host, port, buffsize):
+	def __init__(self, host, port, buffsize):
 		self.host = host
 		self.port = port
 		self.buffsize = buffsize
-		self.inputFromStd = inputFromStd
 		self.s = socket(AF_INET, SOCK_STREAM)
 		self.s.connect((host, port))
-		if inputFromStd:
-			threading._start_new_thread(self.messenger, ())
+		threading._start_new_thread(self.messenger, ())
 	def messenger(self):	# listener(node)
 		while True:
 			try:
@@ -22,13 +20,6 @@ class ClientBase:
 			self.onMessage(data.decode("utf8"))
 	def send(self, msg):
 		self.s.send(msg.encode("utf8"))
-	def work(self):
-		if self.inputFromStd:
-			while True:
-				msg = input(">")
-				self.send(msg)
-		else:
-			self.messenger()
 	# virtual method
 	def onMessage(self, msg):
 		pass

@@ -9,6 +9,7 @@ port = 8087
 #host = ""
 #port = 1122
 buffsize = 2048
+diff0 = 0.05
 
 class Queue:
 	def __init__(self):
@@ -30,9 +31,25 @@ class Cluster(ClusterBase):
 		self.data = {"nodes":{}}
 		self.mutex = threading.Lock()
 		self.mutex.acquire(0)
+		self.deleteLock = threading.Lock()
 		self.infoLock = threading.Lock()
 		self.listLock = threading.Lock()
 		self.msgList = Queue()
+	def updateData(self, time):
+		self.data["time"] = time
+		if self.listLock.acquire():
+			self.data["info"] = {}
+			if self.infoLock.acquire():
+				for x in self.nextInfo:
+					self.data["info"][x] = self.nextInfo[x]["msg"]
+				self.infoLock.release()
+			self.msgList.put(copy.copy(self.data))
+			self.listLock.release()
+		self.time = time
+		self.data = {"nodes":{}}
+		#self.data["time"] = time
+		if not self.mutex.acquire(0):
+			self.mutex.release()
 	def onMessage(self, msg, node):
 		try:
 			msg = json.loads(msg)
@@ -50,20 +67,7 @@ class Cluster(ClusterBase):
 			time = msg["time"]
 			#print("received status at", time)
 			if self.time and time != self.time:		# new second
-				self.data["time"] = time
-				if self.listLock.acquire():
-					self.data["info"] = {}
-					if self.infoLock.acquire():
-						for x in self.nextInfo:
-							self.data["info"][x] = self.nextInfo[x]["msg"]
-						self.infoLock.release()
-					self.msgList.put(copy.copy(self.data))
-					self.listLock.release()
-				#self.data["time"] = time
-				self.time = time
-				self.data = {"nodes":{}}
-				if not self.mutex.acquire(0):
-					self.mutex.release()
+				self.updateData(time)
 			self.time = time
 			self.data["nodes"][msg["node"]] = msg
 			#self.data["nodes"][msg["node"]] = [
@@ -76,6 +80,7 @@ class Cluster(ClusterBase):
 				if self.nextInfo[x]["socket"] == node:
 					print("node", x, "closed connection")
 					del self.nextInfo[x]
+					self.deleteLock.acquire(0)
 					break
 			self.infoLock.release()
 

@@ -8,7 +8,7 @@ import threading
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket, SimpleSSLWebSocketServer
 from optparse import OptionParser
 
-from cluster import Cluster
+from cluster import Cluster, countInterval
 
 host = "10.78.18.246"
 #host = "10.78.18.247"
@@ -18,8 +18,8 @@ port = 8087
 #port = 8087
 
 clients = []
-interval = 1
-diff = 0.25
+interval = 1 * countInterval
+diff = 0.25 * countInterval
 maxLen = 61
 
 class ClusterInterface:
@@ -38,7 +38,11 @@ class ClusterInterface:
 				#print("added", x)
 				self.nodeList[x] = [
 					[
-						[], ""
+						[
+							-1,
+							-1,
+							-1,
+						], "Server not started"
 					] for y in range(0, maxLen)
 				]
 			self.data[i] = self.nodeList[x]
@@ -63,6 +67,14 @@ class ClusterInterface:
 			if not self.cluster.deleteLock.acquire(0):
 				self.cluster.updateData(self.cluster.time)
 				item = self.getClusterStatus()
+			elif self.cluster.interval == 1:
+				item = self.cluster.data
+				item["info"] = {}
+				if self.cluster.infoLock.acquire():
+					for x in self.cluster.nextInfo:
+						item["info"][x] = self.cluster.nextInfo[x]["msg"]
+						self.cluster.infoLock.release()
+				item["time"] = self.cluster.time
 			else:
 				item = {"nodes":{}, "info":{}, "time":""}
 			self.cluster.deleteLock.release()
@@ -88,6 +100,7 @@ class ClusterInterface:
 				#	[3353, "pts/0", "00:00:00", "ps"],
 				#]
 			}
+			#print(self.status)
 			nodeInfo = [x for x in self.status["info"]]
 			if nodeInfo != self.nodeInfo:
 				self.updateNodeInfo(nodeInfo)
@@ -101,11 +114,13 @@ class ClusterInterface:
 				self.nodeList[x].append([self.genBasis(x), self.status["time"]])
 	def genBasis(self, x):
 		return [
-			100 - float(self.status["nodes"][x]["CPU"]["%idle"]),
-			float(self.status["nodes"][x]["memory"]["%memused"])
+			float(self.status["nodes"][x]["CPU"]["ldavg-1"]),
+			float(self.status["nodes"][x]["memory"]["kbmemused"]) / 1048576.0,
+			float(self.status["nodes"][x]["memory"]["%memused"]),
 		] if x in self.status["nodes"] else [
-			0,
-			0
+			-1,
+			-1,
+			-1,
 		] 
 	def getBasis(self):
 		return [

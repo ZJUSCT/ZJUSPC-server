@@ -13,7 +13,7 @@ port = 8087
 #port = 1122
 buffsize = 2048
 
-cmd = ["sar -uqrR -m CPU -m TEMP 1", "nvidia-smi -l 1", "python ipmi.py", "top -d 1 -bic -w 1048576"]
+cmd = ["sar -uqrR -m CPU -m TEMP 1", "nohup nvidia-smi -l 1", "python ipmi.py", "top -d 1 -bic -w 1048576"]
 cmd = list(map(shlex.split, cmd))
 
 class Client(ClientBase):
@@ -62,8 +62,8 @@ class Client(ClientBase):
 				"Memory-Usage": l2[4],
 				"Persistence-M": l1[2],
 				"Bus-Id": l1[3],
-				"Disp.A": l1[4],
-				"Volatile Uncorr. ECC": l1[5],
+				"Disp.A": l1[3],
+				"Volatile Uncorr. ECC": l1[4],
 				"GPU-Util": l2[5],
 				"Compute M.": l2[6]
 			}
@@ -73,7 +73,7 @@ class Client(ClientBase):
 			line = p.stdout.readline().decode("utf8").strip()
 		#print(self.msg)
 	def initSmi(self, p):
-		pass
+		line = p.stdout.readline().decode("utf8").strip()
 	def handleSar(self, p):
 		line = p.stdout.readline().decode("utf8").strip()
 		if self.grp >= len(self.procs):

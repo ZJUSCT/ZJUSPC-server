@@ -8,6 +8,7 @@ host = "172.25.2.1"
 port = 8087
 #host = ""
 #port = 1122
+countInterval = 2
 buffsize = 2048
 diff0 = 0.05
 
@@ -27,6 +28,7 @@ class Cluster(ClusterBase):
 	def __init__(self, host = host, port = port, buffsize = buffsize):
 		super(Cluster, self).__init__(host, port, buffsize)
 		self.time = ""
+		self.interval = countInterval
 		self.nextInfo = {}
 		self.data = {"nodes":{}}
 		self.mutex = threading.Lock()
@@ -50,6 +52,7 @@ class Cluster(ClusterBase):
 		#self.data["time"] = time
 		if not self.mutex.acquire(0):
 			self.mutex.release()
+		self.interval = countInterval
 	def onMessage(self, msg, node):
 		try:
 			msg = json.loads(msg)
@@ -67,7 +70,9 @@ class Cluster(ClusterBase):
 			time = msg["time"]
 			#print("received status at", time)
 			if self.time and time != self.time:		# new second
-				self.updateData(time)
+				self.interval -= 1
+				if self.interval == 0:
+					self.updateData(time)
 			self.time = time
 			self.data["nodes"][msg["node"]] = msg
 			#self.data["nodes"][msg["node"]] = [

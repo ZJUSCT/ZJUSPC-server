@@ -11,10 +11,10 @@ def ipmi():
 		if 'degrees C' in l:
 			print(l)
 	sys.stdout.flush()
-	t = timer(0.2, ipmi)
+	t = timer(0.8, ipmi)
 	t.start()
 
-t = timer(0.2, ipmi)
+t = timer(0.8, ipmi)
 t.start()
 #while True:
 #	pass
